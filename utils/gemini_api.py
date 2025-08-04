@@ -1,32 +1,14 @@
 # utils/gemini_api.py
-import os
-from dotenv import load_dotenv
-import google.generativeai as genai
-load_dotenv()
-# --- Configuration ---
-# Configure the Gemini API key from environment variables
-# This setup includes error handling in case the API key is missing or invalid.
-try:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable not set.")
-    genai.configure(api_key=api_key)
-    # Initialize the specific model we'll be using
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-except Exception as e:
-    print(f"Error configuring Gemini API: {e}")
-    model = None
 
-# --- AI Functions ---
+# We now only need to import our master request function
+from .api_key_manager import make_gemini_request
+
+# --- AI Functions (now simplified to use the key manager) ---
 
 async def get_summary(resume_text: str) -> str:
     """
     Generates a concise professional summary from the resume text.
     """
-    if not model:
-        return "Error: Gemini model is not configured. Please check your API key."
-    
-    # This prompt is excellent for a high-level overview.
     prompt = f"""
     Analyze the following resume and provide a concise summary in 4-5 sentences that captures:
     1. The candidate's professional level and main expertise
@@ -40,21 +22,13 @@ async def get_summary(resume_text: str) -> str:
 
     Summary:
     """
-    try:
-        response = await model.generate_content_async(prompt)
-        return response.text
-    except Exception as e:
-        return f"An error occurred while generating the summary: {e}"
+    # Delegate the entire request process to the key manager
+    return await make_gemini_request(prompt)
 
 async def get_analysis(resume_text: str) -> str:
     """
     Provides a detailed, section-wise analysis of the resume's quality.
     """
-    if not model:
-        return "Error: Gemini model is not configured. Please check your API key."
-        
-    # Refinement: I've made this prompt self-contained by removing the `{summary}` input.
-    # It now works directly with the full resume text for a more comprehensive analysis.
     prompt = f"""
     As an expert HR analyst and ATS specialist, provide a comprehensive analysis of this resume.
 
@@ -71,20 +45,13 @@ async def get_analysis(resume_text: str) -> str:
 
     Provide specific, actionable recommendations for each area in a section-wise markdown format.
     """
-    try:
-        response =await model.generate_content_async(prompt)
-        return response.text
-    except Exception as e:
-        return f"An error occurred while generating the analysis: {e}"
+    # Delegate the entire request process to the key manager
+    return await make_gemini_request(prompt)
 
 async def get_wellness_score(analysis_text: str) -> str:
     """
     Generates a wellness score based on the detailed analysis provided.
     """
-    if not model:
-        return "Error: Gemini model is not configured. Please check your API key."
-        
-    # This prompt is great because it bases the score on the prior analysis, ensuring consistency.
     prompt = f"""
     Based on the following resume analysis, provide a "Wellness Score" from 0.0 to 10.0 that represents the overall quality and effectiveness of the resume.
 
@@ -104,8 +71,5 @@ async def get_wellness_score(analysis_text: str) -> str:
     Score: X.X
     Explanation: [Brief explanation]
     """
-    try:
-        response = await model.generate_content_async(prompt)
-        return response.text
-    except Exception as e:
-        return f"An error occurred while generating the wellness score: {e}"
+    # Delegate the entire request process to the key manager
+    return await make_gemini_request(prompt)

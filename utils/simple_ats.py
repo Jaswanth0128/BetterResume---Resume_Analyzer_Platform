@@ -1,38 +1,14 @@
 # utils/simple_ats.py
-import os
 import re
-import google.generativeai as genai
-from dotenv import load_dotenv
-load_dotenv()
-
-# --- Configuration ---
-# Set up the Gemini API client and model
-try:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable not set.")
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
-except Exception as e:
-    print(f"Error configuring Gemini API: {e}")
-    model = None
+# We now only need to import our master request function
+from .api_key_manager import make_gemini_request
 
 async def calculate_ats_score(resume_text: str, job_description: str) -> dict:
     """
-    Calculates an ATS score by comparing a resume to a job description.
-
-    This function sends the resume and job description to the Gemini API
-    and parses the response to extract a numeric score and a detailed analysis.
-
-    Returns:
-        A dictionary containing the 'score' (int) and 'analysis' (str).
+    Calculates an ATS score by delegating the request to the key manager
+    and then parsing the successful response.
     """
-    if not model:
-        return {"score": 0, "analysis": "Error: Gemini model is not configured."}
-
-    # --- Refined Prompt ---
-    # This prompt provides clearer instructions and asks for a structured,
-    # markdown-formatted analysis for better readability on the frontend.
+    # Using the detailed prompt you provided
     prompt = f"""
     You are an expert ATS (Applicant Tracking System) and professional resume evaluator.
 
@@ -43,6 +19,7 @@ async def calculate_ats_score(resume_text: str, job_description: str) -> dict:
     2.  Provide an ATS compatibility score from 0 to 100.
     3.  Provide a detailed analysis explaining the score. The analysis MUST include sections(Section names in bold) for "**1. Matching Skills**", "**2.  Missing Keywords**", and "**3. Suggestions for Improvement**" using markdown.
     4.  Maintain professionalism throughout the response, dont use informal language.
+    
     **Resume Text:**
     {resume_text}
 
@@ -58,20 +35,19 @@ async def calculate_ats_score(resume_text: str, job_description: str) -> dict:
     [Your detailed analysis with the required markdown sections]
     """
 
-    try:
-        response = await model.generate_content_async(prompt)
-        response_text = response.text
+    # Get the raw response from our key-rotating function
+    response_text = await make_gemini_request(prompt)
 
-        # --- Response Parsing ---
-        # Use regular expressions to reliably extract the score and analysis.
-        score_match = re.search(r"ATS Score:\s*(\d+)/100", response_text, re.IGNORECASE)
-        score = int(score_match.group(1)) if score_match else 0
-        
-        # The analysis is everything that comes after the "Analysis:" heading.
-        analysis_parts = re.split(r"\*\*Analysis:\*\*", response_text, flags=re.IGNORECASE)
-        analysis = analysis_parts[1].strip() if len(analysis_parts) > 1 else "Could not parse analysis."
+    # Check if the master request function returned an error message
+    if "Error:" in response_text or "All available API keys" in response_text:
+        return {"score": 0, "analysis": response_text}
 
-        return {"score": score, "analysis": analysis}
-        
-    except Exception as e:
-        return {"score": 0, "analysis": f"An error occurred during ATS analysis: {e}"}
+    # Parse the successful response
+    score_match = re.search(r"ATS Score:\s*(\d+)/100", response_text, re.IGNORECASE)
+    score = int(score_match.group(1)) if score_match else 0
+    
+    # Use a flexible search to find the start of the analysis
+    analysis_match = re.search(r'analysis:', response_text, re.IGNORECASE)
+    analysis = response_text[analysis_match.end():].strip() if analysis_match else "Could not parse analysis from the AI response."
+
+    return {"score": score, "analysis": analysis}
