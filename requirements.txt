@@ -9,3 +9,4 @@ simple-ats
 requests
 google-generativeai
 gunicorn 
+markdown
