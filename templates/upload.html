@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterResume - Resume Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>BetterResume</h1>
+            <h4>Resume Analyzer</h4>
+        </header>
+
+        <main>
+            {% if error %}
+                <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form id="analyze-form" action="/analyze" method="post" enctype="multipart/form-data">
+                
+                <div class="form-columns">
+                    <div class="form-group left-column">
+                        <label for="resume">1. Upload Your Resume</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="resume" name="resume" accept=".pdf" required>
+                            <span id="file-name-display">PDF file only</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group right-column">
+                        <label for="job_description">2. Paste Job Description (Optional)</label>
+                        <textarea id="job_description" name="job_description" rows="12" placeholder="Paste the full job description here for an ATS score..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-container">
+                    <button type="submit" id="analyze-button" class="btn-analyze">Analyze</button>
+                </div>
+
+            </form>
+
+            <section class="features-section">
+                <h2>What You'll Get</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Wellness Score</h3>
+                        <p>Receive an overall quality score for your resume, evaluating its clarity, professional presentation, and content effectiveness.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>ATS Score</h3>
+                        <p>See how well your resume matches a specific job description, with a score based on keyword and skill compatibility.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>ATS Analysis</h3>
+                        <p>Get a breakdown of matching skills and missing keywords to help you tailor your resume for the job you want.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Detailed Analysis</h3>
+                        <p>Our AI provides a deep dive into your resume's strengths, weaknesses, and actionable suggestions for improvement.</p>
+                    </div>
+                </div>
+            </section>
+            </main>
+
+        <footer>
+            <p>by KARIMI VENKATA SIMHACHALA JAYSURYA JASWANTH</p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('analyze-form');
+        const button = document.getElementById('analyze-button');
+        const resumeInput = document.getElementById('resume');
+        const fileDisplay = document.getElementById('file-name-display');
+
+        form.addEventListener('submit', function() {
+            if(form.checkValidity()) {
+                button.disabled = true;
+                button.textContent = '⏳ Analyzing... Please Wait';
+            }
+        });
+
+        resumeInput.addEventListener('change', function() {
+            if (resumeInput.files.length > 0) {
+                fileDisplay.textContent = resumeInput.files[0].name;
+                fileDisplay.style.color = '#000';
+            } else {
+                fileDisplay.textContent = 'PDF file only';
+                fileDisplay.style.color = '#777';
+            }
+        });
+    </script>
+</body>
+</html>
