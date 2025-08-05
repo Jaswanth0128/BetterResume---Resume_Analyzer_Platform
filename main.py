@@ -12,6 +12,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
+# NEW: Import for CORS Middleware
+from fastapi.middleware.cors import CORSMiddleware
+
 # Import all our new and existing modules
 from db import models, schemas
 from db.database import engine, SessionLocal
@@ -24,6 +27,17 @@ from utils.simple_ats import calculate_ats_score
 models.Base.metadata.create_all(bind=engine)
 load_dotenv()
 app = FastAPI()
+
+# --- ADD CORS MIDDLEWARE ---
+# This allows the frontend JavaScript to make requests to the backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -37,7 +51,7 @@ def get_db():
         db.close()
 
 
-# --- AUTHENTICATION DATA ENDPOINTS (UNCHANGED) ---
+# --- AUTHENTICATION DATA ENDPOINTS ---
 
 @app.post("/signup", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -65,7 +79,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# --- PAGE SERVING ENDPOINTS (NEW FLOW) ---
+# --- PAGE SERVING ENDPOINTS ---
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_landing_page(request: Request):
@@ -97,8 +111,6 @@ async def analyze_resume(
     resume: UploadFile = File(...),
     job_description: str = Form("")
 ):
-    # This function's internal logic remains exactly the same as before
-    # ... (all the analysis, parsing, and context creation) ...
     if resume.content_type != "application/pdf":
         return templates.TemplateResponse("dashboard.html", {"request": request, "error": "Invalid file type.", "user": current_user})
     
