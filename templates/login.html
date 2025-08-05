@@ -13,7 +13,8 @@
         </header>
         <main>
             <div id="error-box" class="error-box" style="display: none;"></div>
-            <form id="login-form">
+            
+            <form id="login-form" class="auth-form">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="username" required>
@@ -49,7 +50,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('accessToken', data.access_token);
-                    window.location.href = '/dashboard'; // Redirect to main page on success
+                    window.location.href = '/dashboard';
                 } else {
                     const errorData = await response.json();
                     errorBox.textContent = errorData.detail || 'Login failed. Please check your credentials.';

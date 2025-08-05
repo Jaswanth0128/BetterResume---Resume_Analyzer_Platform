@@ -375,3 +375,8 @@ footer {
     margin-bottom: 1.5rem;
     text-align: center;
 }
+
+.auth-form {
+    max-width: 400px; /* Sets a nice width for the form */
+    margin: 0 auto;   /* This is the magic that centers it */
+}
