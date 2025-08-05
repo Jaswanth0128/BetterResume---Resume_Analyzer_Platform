@@ -1,3 +1,4 @@
+# main.py
 import os
 import re
 import markdown
@@ -58,7 +59,12 @@ async def analyze_resume(request: Request, resume: UploadFile = File(...), job_d
     current_date_str = datetime.now().strftime("%B %d, %Y")
 
     summary = await get_summary(resume_text)
-    detailed_analysis = await get_analysis(resume_text)
+    
+    # Pass the current date to get_analysis as well
+    detailed_analysis = await get_analysis(
+        resume_text=resume_text, 
+        current_date=current_date_str
+    )
     
     # Pass the current date into the function call
     wellness_score_raw = await get_wellness_score(

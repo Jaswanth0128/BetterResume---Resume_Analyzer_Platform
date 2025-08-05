@@ -25,12 +25,12 @@ async def get_summary(resume_text: str) -> str:
     # Delegate the entire request process to the key manager
     return await make_gemini_request(prompt)
 
-async def get_analysis(resume_text: str) -> str:
+async def get_analysis(resume_text: str, current_date: str) -> str:
     """
     Provides a detailed, section-wise analysis of the resume's quality.
     """
     prompt = f"""
-    As an expert HR analyst and ATS specialist, provide a comprehensive analysis of this resume.
+    You are an expert HR analyst. The current date is {current_date}. Analyze all dates in the resume relative to this date.
 
     Full Resume Text:
     {resume_text}
@@ -52,8 +52,6 @@ async def get_wellness_score(analysis_text: str, current_date: str) -> str:
     """
     Generates a wellness score based on the detailed analysis provided.
     """
-    
-
     prompt = f"""
     The current date is {current_date}. You must evaluate all dates on the resume relative to this date.
 
