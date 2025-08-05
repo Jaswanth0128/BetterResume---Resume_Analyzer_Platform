@@ -49,7 +49,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('accessToken', data.access_token);
-                    window.location.href = '/'; // Redirect to main page on success
+                    window.location.href = '/dashboard'; // Redirect to main page on success
                 } else {
                     const errorData = await response.json();
                     errorBox.textContent = errorData.detail || 'Login failed. Please check your credentials.';

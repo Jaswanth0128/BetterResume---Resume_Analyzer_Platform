@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Dashboard - BetterResume</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header class="dashboard-header">
+            <h1>BetterResume Analyzer</h1>
+            <div class="user-info">
+                <span>Welcome, {{ user.email }}</span>
+                <button id="logout-button" class="btn-logout">Logout</button>
+            </div>
+        </header>
+
+        <main>
+            {% if error %}
+                <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form id="analyze-form">
+                <div class="form-columns">
+                    <div class="form-group left-column">
+                        <label for="resume">1. Upload Your Resume</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="resume" name="resume" accept=".pdf" required>
+                            <span id="file-name-display">PDF file only</span>
+                        </div>
+                    </div>
+                    <div class="form-group right-column">
+                        <label for="job_description">2. Paste Job Description (Optional)</label>
+                        <textarea id="job_description" name="job_description" rows="12" placeholder="Paste the full job description here for an ATS score..."></textarea>
+                    </div>
+                </div>
+
+                <div class="button-container">
+                    <button type="submit" id="analyze-button" class="btn-analyze">Analyze</button>
+                </div>
+            </form>
+        </main>
+        
+        <footer>
+            <p>by KARIMI VENKATA SIMHACHALA JAYSURYA JASWANTH</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Authentication Handling ---
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            // If no token is found in browser storage, redirect to the login page
+            window.location.href = '/login';
+        }
+
+        // Logout functionality
+        const logoutButton = document.getElementById('logout-button');
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('accessToken');
+            window.location.href = '/'; // Redirect to the public landing page
+        });
+
+        // --- Authenticated Form Submission ---
+        const analyzeForm = document.getElementById('analyze-form');
+        const analyzeButton = document.getElementById('analyze-button');
+        const resumeInput = document.getElementById('resume');
+        const fileDisplay = document.getElementById('file-name-display');
+
+        analyzeForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+            
+            if(!analyzeForm.checkValidity()) {
+                // Handle case where file is not selected
+                return;
+            }
+
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = '⏳ Analyzing... Please Wait';
+            
+            // Create a FormData object to send the file and text
+            const formData = new FormData();
+            formData.append('resume', resumeInput.files[0]);
+            formData.append('job_description', document.getElementById('job_description').value);
+
+            try {
+                // Use fetch to send the request with the authentication token
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        // IMPORTANT: Add the Authorization header with the token
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // If successful, replace the entire page with the results HTML
+                    const resultsHtml = await response.text();
+                    document.body.innerHTML = resultsHtml;
+                } else if (response.status === 401) {
+                    // If token is invalid/expired, send user back to login
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = '/login';
+                } else {
+                    const errorData = await response.json();
+                    alert(`An error occurred: ${errorData.detail || 'Please try again.'}`);
+                    analyzeButton.disabled = false;
+                    analyzeButton.textContent = 'Analyze';
+                }
+            } catch (error) {
+                alert('A network error occurred. Please check your connection.');
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = 'Analyze';
+            }
+        });
+
+        // Keep the file name display functionality
+        resumeInput.addEventListener('change', function() {
+            if (resumeInput.files.length > 0) {
+                fileDisplay.textContent = resumeInput.files[0].name;
+                fileDisplay.style.color = '#000';
+            } else {
+                fileDisplay.textContent = 'PDF file only';
+                fileDisplay.style.color = '#777';
+            }
+        });
+    </script>
+</body>
+</html>
