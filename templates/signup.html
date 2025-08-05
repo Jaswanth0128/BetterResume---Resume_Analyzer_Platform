@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - BetterResume</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>Create an Account</h1>
+        </header>
+        <main>
+            <div id="error-box" class="error-box" style="display: none;"></div>
+            <div id="success-box" class="success-box" style="display: none;"></div>
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="button-container">
+                    <button type="submit" class="btn-analyze">Sign Up</button>
+                </div>
+            </form>
+             <p class="auth-switch">Already have an account? <a href="/login">Login</a></p>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('signup-form');
+        const errorBox = document.getElementById('error-box');
+        const successBox = document.getElementById('success-box');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            errorBox.style.display = 'none';
+            successBox.style.display = 'none';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    successBox.textContent = 'Account created successfully! You can now log in.';
+                    successBox.style.display = 'block';
+                    form.reset();
+                } else {
+                    const errorData = await response.json();
+                    errorBox.textContent = errorData.detail || 'Signup failed. Please try again.';
+                    errorBox.style.display = 'block';
+                }
+            } catch (error) {
+                errorBox.textContent = 'An unexpected error occurred. Please try again.';
+                errorBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

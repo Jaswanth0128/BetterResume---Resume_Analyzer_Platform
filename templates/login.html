@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BetterResume</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>Login to BetterResume</h1>
+        </header>
+        <main>
+            <div id="error-box" class="error-box" style="display: none;"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="button-container">
+                    <button type="submit" class="btn-analyze">Login</button>
+                </div>
+            </form>
+            <p class="auth-switch">Don't have an account? <a href="/signup">Sign Up</a></p>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorBox = document.getElementById('error-box');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            errorBox.style.display = 'none';
+
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('accessToken', data.access_token);
+                    window.location.href = '/'; // Redirect to main page on success
+                } else {
+                    const errorData = await response.json();
+                    errorBox.textContent = errorData.detail || 'Login failed. Please check your credentials.';
+                    errorBox.style.display = 'block';
+                }
+            } catch (error) {
+                errorBox.textContent = 'An unexpected error occurred. Please try again.';
+                errorBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

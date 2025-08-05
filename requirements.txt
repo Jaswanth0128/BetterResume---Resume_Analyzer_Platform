@@ -10,3 +10,7 @@ requests
 google-generativeai
 gunicorn 
 markdown
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+python-jose[cryptography]
