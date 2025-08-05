@@ -6,13 +6,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Import all our utility functions
 from utils.extract_text import extract_text_from_pdf
 from utils.gemini_api import get_summary, get_analysis, get_wellness_score
 from utils.simple_ats import calculate_ats_score
 
-# Load environment variables from the .env file
+# Load environment variables from .env file
 load_dotenv()
 
 # Initialize the FastAPI application
@@ -23,6 +24,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Setup the Jinja2 templating engine to render HTML pages from the 'templates' directory
 templates = Jinja2Templates(directory="templates")
+
 
 # --- Route for the main upload page ---
 @app.get("/", response_class=HTMLResponse)
@@ -47,24 +49,44 @@ async def analyze_resume(request: Request, resume: UploadFile = File(...), job_d
     
     # 2. Extract text from the PDF
     resume_text = await extract_text_from_pdf(resume)
-    if not resume_text:
-        return templates.TemplateResponse("upload.html", {"request": request, "error": "Could not extract text from the PDF. The file might be empty or corrupted."})
+    if not resume_text.strip():
+        error_message = "Could not find any text to analyze. Please ensure your PDF is text-based and not an image or a scan."
+        return templates.TemplateResponse("upload.html", {"request": request, "error": error_message})
 
     # 3. Perform AI Analysis (in sequence)
+    # Get the current date to pass to the AI for accurate date evaluation
+    current_date_str = datetime.now().strftime("%B %d, %Y")
+
     summary = await get_summary(resume_text)
     detailed_analysis = await get_analysis(resume_text)
-    # The wellness score is based on the detailed analysis
-    wellness_score_raw = await get_wellness_score(analysis_text=detailed_analysis)
+    
+    # Pass the current date into the function call
+    wellness_score_raw = await get_wellness_score(
+        analysis_text=detailed_analysis, 
+        current_date=current_date_str
+    )
 
-    # 4. Parse the Wellness Score and its explanation
+    # 4. Parse the Wellness Score and its explanation (UPDATED LOGIC)
     wellness_score_value = 0.0
-    wellness_score_explanation = "Could not parse score."
+    explanation_parts = []  # Use a list to build the full explanation string
+
+    # Get the score
     score_match = re.search(r"Score:\s*([0-9.]+)", wellness_score_raw)
     if score_match:
         wellness_score_value = float(score_match.group(1))
-    explanation_match = re.search(r"Explanation:\s*(.*)", wellness_score_raw, re.DOTALL)
+
+    # Get the main explanation, stopping before an optional "Note:"
+    explanation_match = re.search(r"Explanation:\s*(.*?)(?:\nNote:|$)", wellness_score_raw, re.DOTALL)
     if explanation_match:
-        wellness_score_explanation = explanation_match.group(1).strip()
+        explanation_parts.append(explanation_match.group(1).strip())
+
+    # Get the optional note, if it exists
+    note_match = re.search(r"Note:\s*(.*)", wellness_score_raw, re.DOTALL)
+    if note_match:
+        explanation_parts.append(f"Note: {note_match.group(1).strip()}")
+
+    # Combine the parts for the final display string
+    wellness_score_explanation = "\n".join(explanation_parts) if explanation_parts else "Could not parse score."
     
     # Calculate percentage for the progress bar (Score / 10 * 100)
     wellness_score_percent = wellness_score_value * 10

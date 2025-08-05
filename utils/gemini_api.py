@@ -48,28 +48,36 @@ async def get_analysis(resume_text: str) -> str:
     # Delegate the entire request process to the key manager
     return await make_gemini_request(prompt)
 
-async def get_wellness_score(analysis_text: str) -> str:
+async def get_wellness_score(analysis_text: str, current_date: str) -> str:
     """
     Generates a wellness score based on the detailed analysis provided.
     """
-    prompt = f"""
-    Based on the following resume analysis, provide a "Wellness Score" from 0.0 to 10.0 that represents the overall quality and effectiveness of the resume.
+    
 
-    Consider these factors in your scoring:
+    prompt = f"""
+    The current date is {current_date}. You must evaluate all dates on the resume relative to this date.
+
+    Based on the resume analysis provided below, provide a "Wellness Score" from 0.0 to 10.0.
+
+    **Scoring Factors (Do NOT penalize the score for a missing summary):**
     - ATS compatibility (25%)
     - Content quality and relevance (25%)
     - Professional presentation (20%)
     - Completeness of information (15%)
     - Achievement quantification (15%)
 
-    Analysis:
+    **Additional Check (Separate from score):**
+    - After the explanation, add a "Note:" section ONLY IF a professional summary or objective is missing.
+
+    **Analysis:**
     {analysis_text}
 
-    Provide ONLY a numeric score between 0.0 and 10.0, followed by a brief 2-3 sentence explanation of the score. If the score is low, explain why.
+    **Output Format:**
+    Provide your response in this exact format. The "Note:" section is optional and should only appear if a summary is missing.
 
-    Format your response exactly as:
     Score: X.X
-    Explanation: [Brief explanation]
+    Explanation: [Brief 2-3 sentence explanation of the score based on the factors above.]
+    Note: [This resume is missing a professional summary, which is highly recommended.]
     """
     # Delegate the entire request process to the key manager
     return await make_gemini_request(prompt)
