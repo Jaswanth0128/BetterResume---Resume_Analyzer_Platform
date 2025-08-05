@@ -13,7 +13,6 @@
         </header>
         <main>
             <div id="error-box" class="error-box" style="display: none;"></div>
-            
             <form id="login-form" class="auth-form">
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -48,16 +47,15 @@
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('accessToken', data.access_token);
+                    // Success! The cookie is set by the browser. Redirect to dashboard.
                     window.location.href = '/dashboard';
                 } else {
                     const errorData = await response.json();
-                    errorBox.textContent = errorData.detail || 'Login failed. Please check your credentials.';
+                    errorBox.textContent = errorData.detail || 'Login failed.';
                     errorBox.style.display = 'block';
                 }
             } catch (error) {
-                errorBox.textContent = 'An unexpected error occurred. Please try again.';
+                errorBox.textContent = 'An unexpected error occurred.';
                 errorBox.style.display = 'block';
             }
         });

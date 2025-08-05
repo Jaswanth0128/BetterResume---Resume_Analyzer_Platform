@@ -4,15 +4,13 @@ import markdown
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, Request, Form, File, UploadFile, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Form, File, UploadFile, Depends, HTTPException, status, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-
-# NEW: Import for CORS Middleware
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import all our new and existing modules
@@ -29,13 +27,12 @@ load_dotenv()
 app = FastAPI()
 
 # --- ADD CORS MIDDLEWARE ---
-# This allows the frontend JavaScript to make requests to the backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -50,8 +47,14 @@ def get_db():
     finally:
         db.close()
 
+# NEW DEPENDENCY: Gets the full user object from the DB based on the token
+def get_current_db_user(token_data: schemas.TokenData = Depends(jwt_handler.get_current_user), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == token_data.email).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
 
-# --- AUTHENTICATION DATA ENDPOINTS ---
+# --- AUTHENTICATION ENDPOINTS ---
 
 @app.post("/signup", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -66,39 +69,41 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@app.post("/login", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@app.post("/login")
+def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user or not hashing.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = jwt_handler.create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Set the token in a secure, HttpOnly cookie
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return {"message": "Login successful"}
+
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(key="access_token")
+    return {"message": "Logout successful"}
 
 
 # --- PAGE SERVING ENDPOINTS ---
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_landing_page(request: Request):
-    """Serves the public landing page (index.html) for all visitors."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/signup", response_class=HTMLResponse)
 async def serve_signup_page(request: Request):
-    """Serves the signup page."""
     return templates.TemplateResponse("signup.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
 async def serve_login_page(request: Request):
-    """Serves the login page."""
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def serve_dashboard_page(request: Request, current_user: schemas.User = Depends(jwt_handler.get_current_user)):
-    """Serves the protected dashboard for logged-in users."""
+async def serve_dashboard_page(request: Request, current_user: schemas.User = Depends(get_current_db_user)):
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": current_user})
 
 
@@ -107,7 +112,7 @@ async def serve_dashboard_page(request: Request, current_user: schemas.User = De
 @app.post("/analyze", response_class=HTMLResponse)
 async def analyze_resume(
     request: Request,
-    current_user: schemas.User = Depends(jwt_handler.get_current_user), # Protection is here
+    current_user: schemas.User = Depends(get_current_db_user),
     resume: UploadFile = File(...),
     job_description: str = Form("")
 ):

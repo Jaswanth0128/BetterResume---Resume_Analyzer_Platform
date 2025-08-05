@@ -3,8 +3,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Cookie
 from jose import JWTError, jwt
 from dotenv import load_dotenv
 
@@ -12,17 +11,12 @@ from db import schemas
 
 load_dotenv()
 
-# These should be in your .env file
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Token will be valid for 30 minutes
-
-# This scheme will look for the token in the 'Authorization: Bearer <token>' header
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 def create_access_token(data: dict):
-    """Creates a new JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -31,23 +25,24 @@ def create_access_token(data: dict):
 
 
 def verify_token(token: str, credentials_exception):
-    """Verifies a JWT token and returns the payload (user email)."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = schemas.TokenData(email=email)
-        return token_data
+        return schemas.TokenData(email=email)
     except JWTError:
         raise credentials_exception
 
-# This is a dependency that our protected endpoints will use
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Dependency to get the current user from a token."""
+
+def get_current_user(access_token: str | None = Cookie(None)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Could not validate credentials, please log in again.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if access_token is None:
+        raise credentials_exception
+    
+    token = access_token.split(" ")[1] 
     return verify_token(token, credentials_exception)
