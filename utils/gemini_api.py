@@ -30,20 +30,30 @@ async def get_analysis(resume_text: str, current_date: str) -> str:
     Provides a detailed, section-wise analysis of the resume's quality.
     """
     prompt = f"""
-    You are an expert HR analyst. The current date is {current_date}. Analyze all dates in the resume relative to this date.
+    You are an expert HR analyst and resume writing coach. The current date is {current_date}. Analyze all dates in the resume relative to this date.
 
-    Full Resume Text:
+    Your task is to provide a professional, section-by-section analysis of the provided resume.
+
+    **Instructions:**
+    1.  Analyze the resume based on the sections below.
+    2.  For each section, provide specific, actionable recommendations for improvement.
+    3.  Use markdown for formatting. Each section heading MUST be on its own line and formatted as a level 3 markdown heading (e.g., ### ATS Compatibility & Format).
+    4.  Do NOT include any introductory title, preamble, or summary of your own (e.g., do not write "Resume Analysis for..." or "This analysis assesses..."). Start directly with the first section heading.
+    5.  Maintain a professional tone. Do not use informal language or emojis.
+
+    **Resume Text:**
     {resume_text}
 
-    Please analyze and provide detailed feedback on:
-    1. **ATS Compatibility & Format**: Section organization, headers, keyword optimization.
-    2. **Content Quality & Structure**: Summary effectiveness, work experience, skills, education, contact info.
-    3. **Experience & Achievements**: Quantifiable metrics, career progression, relevance, impact.
-    4. **Skills & Technical Competencies**: Hard vs soft skills, industry tech, categorization, gaps.
-    5. **Areas for Improvement**: Missing sections, weak points, formatting suggestions.
-    6. **Overall Strengths**: Standout qualities, competitive advantages, well-executed sections.
+    ---
+    **Analysis Sections to Cover:**
+    - ### ATS Compatibility & Format
+    - ### Content Quality & Structure
+    - ### Experience & Achievements
+    - ### Skills & Technical Competencies
+    - ### Areas for Improvement
+    - ### Overall Strengths
 
-    Provide specific, actionable recommendations for each area in a section-wise markdown format.
+    Begin your response with the first section.
     """
     # Delegate the entire request process to the key manager
     return await make_gemini_request(prompt)

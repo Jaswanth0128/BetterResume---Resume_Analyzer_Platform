@@ -3,9 +3,8 @@
 
 /* --- Variable Definitions --- */
 :root {
-    --primary-blue: #007bff; /* A nice, accessible light blue */
     --hover-blue: #28a745;
-    --background-color: #f0f2f5; /* A very light grey background */
+    --background-color: #f0f2f5; 
     --container-bg: #ffffff;
     --text-primary: #000000;
     --text-secondary: #555555;
@@ -311,7 +310,7 @@ footer {
 }
 
 .progress-bar {
-    background-color: var(--primary-blue);
+    background-color: var(--hover-blue);
     height: 100%;
     border-radius: 10px;
     transition: width 0.5s ease-in-out;
@@ -343,22 +342,37 @@ footer {
 }
 
 /* Markdown Content Styling */
-.markdown-content h3, .markdown-content h4 {
-    color: var(--text-primary);
-    margin-top: 1.5rem;
-}
-
 .markdown-content ul {
     padding-left: 20px;
-    list-style-type: '✅ ';
+    list-style-type: disc; /* Use standard bullets for a professional look */
 }
 
 .markdown-content li {
     margin-bottom: 0.75rem;
+    padding-left: 8px; /* Add some space between bullet and text */
 }
 
 .markdown-content strong {
-    color: var(--primary-blue);
+    color: #333 ; /* Use the theme's green color for consistency */
+}
+
+/* Make markdown headings more prominent */
+.markdown-content h3 {
+    font-size: 1.3rem;
+    color: var(--hover-blue);
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 0.4rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content h3:first-child {
+    margin-top: 0;
+}
+
+.markdown-content h4 {
+    color: var(--text-primary);
+    margin-top: 1.5rem;
 }
 
 /* Next Steps / Action Items */
