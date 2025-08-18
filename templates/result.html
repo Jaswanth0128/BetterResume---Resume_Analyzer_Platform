@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Resume Analysis - BetterResume</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container result-page">
+        <header>
+            <img src="/static/logo.png" alt="BetterResume Logo" class="logo">
+            <h1>BetterResume - Your Analysis</h1>
+        </header>
+
+        <main>
+            <!-- Scores Section -->
+            <div class="scores-container">
+                <!-- Wellness Score Card -->
+                <div class="score-card">
+                    <h2>Resume Wellness Score</h2>
+                    <p class="score-value">{{ wellness_score_value }}/10</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: {{ wellness_score_percent }}%;"></div>
+                    </div>
+                    <p class="score-explanation">{{ wellness_score_explanation }}</p>
+                </div>
+
+                <!-- ATS Score Card -->
+                <div class="score-card">
+                    <h2>ATS Compatibility Score</h2>
+                    {% if jd_provided %}
+                        <p class="score-value">{{ ats_score }}/100</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: {{ ats_score }}%;"></div>
+                        </div>
+                        <p class="score-explanation">Based on the provided job description.</p>
+                    {% else %}
+                        <p class="score-value">N/A</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <p class="score-explanation">No job description was provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- AI Summary Section -->
+            <div class="analysis-section">
+                <h2>AI Summary</h2>
+                <div class="content-box">
+                    <p>{{ summary }}</p>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Sections -->
+            {% if jd_provided %}
+            <div class="analysis-section">
+                <h2>ATS Analysis</h2>
+                <div class="content-box markdown-content">
+                    {{ ats_analysis_html | safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="analysis-section">
+                <h2>Detailed Resume Analysis</h2>
+                <div class="content-box markdown-content">
+                    {{ detailed_analysis_html | safe }}
+                </div>
+            </div>
+            
+            <!-- Next Steps Section -->
+            <div class="analysis-section">
+                <h2>✅ Next Steps</h2>
+                <div class="content-box">
+                    <div class="action-items">
+                         {% if wellness_score_value < 6 %}
+                         <div class="action-item priority-high">
+                             <strong>High Priority:</strong> Your resume's Wellness Score is low. Focus on the major improvements highlighted in the detailed analysis, especially regarding content quality and structure.
+                         </div>
+                         {% endif %}
+                         
+                         {% if jd_provided and ats_score < 60 %}
+                         <div class="action-item priority-high">
+                             <strong>ATS Optimization:</strong> Your resume is not well-matched for this job. Incorporate more relevant keywords and skills from the job description into your experience section.
+                         </div>
+                         {% endif %}
+                         
+                         <div class="action-item">
+                             <strong>Review & Update:</strong> Carefully address the specific recommendations provided in the detailed analysis sections above to improve your resume's impact.
+                         </div>
+                         
+                         <div class="action-item">
+                             <strong>Test Again:</strong> After making improvements, upload your updated resume for a new analysis to track your progress.
+                         </div>
+                         
+                         {% if not jd_provided %}
+                         <div class="action-item">
+                             <strong>Get Targeted Feedback:</strong> Upload your resume again with a specific job description to receive a targeted ATS compatibility score and analysis.
+                         </div>
+                         {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+
+        <footer class="result-footer">
+            <a href="/" class="btn-analyze">Analyze Another Resume</a>
+          <p>© 2024 by KARIMI VENKATA SIMHACHALA JAYSURYA JASWANTH</p>
+          <div class="social-links">
+              <a href="https://www.instagram.com/j_a_s_w_a_n_t_h_jaysurya" target="_blank">Instagram</a> |
+              <a href="https://github.com/Jaswanth0128/BetterResume---Resume_Analyzer_Platform" target="_blank">GitHub</a> |
+              <a href="https://www.linkedin.com/in/jaysurya-jaswanth" target="_blank">LinkedIn</a>
+        </footer>
+    </div>
+</body>
+</html>
