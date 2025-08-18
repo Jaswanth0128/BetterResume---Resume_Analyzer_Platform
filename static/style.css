@@ -82,7 +82,7 @@ header {
 .difference-card p {
     font-size: 0.95rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .difference-card h3 {
@@ -225,7 +225,7 @@ textarea:focus {
 .feature-card p {
     font-size: 0.95rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 /* Responsive adjustments for the features grid */
@@ -339,6 +339,12 @@ footer {
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #e7e7e7;
+}
+
+/* Add line-height for better readability in analysis text */
+.analysis-section .content-box p,
+.analysis-section .content-box li {
+    line-height: 1.6;
 }
 
 /* Markdown Content Styling */
