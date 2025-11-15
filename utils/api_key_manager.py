@@ -43,7 +43,7 @@ async def make_gemini_request(prompt: str):
             # Configure the library with the current key
             current_key = key_manager.keys[key_manager.current_key_index]
             genai.configure(api_key=current_key)
-            model = genai.GenerativeModel('gemini-1.5-flash-latest')
+            model = genai.GenerativeModel('gemini-2.5-flash')
 
             # Make the API call
             response = await model.generate_content_async(prompt)
